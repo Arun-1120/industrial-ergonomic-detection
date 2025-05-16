@@ -12,6 +12,11 @@ import time
 from PIL import Image
 import base64
 from io import BytesIO
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Body part icons using emojis
 BODY_PART_ICONS = {
@@ -174,112 +179,128 @@ def get_video_duration(video_path: str) -> float:
     return duration
 
 def main():
-    st.set_page_config(
-        page_title="Industrial Ergonomic Risk Detection",
-        page_icon="🏭",
-        layout="wide"
-    )
-    
-    st.title("🏭 Industrial Ergonomic Risk Detection")
-    st.markdown("""
-    This application analyzes videos of industrial work to detect potentially risky postures.
-    Upload a video to get started with the analysis.
-    """)
-    
-    # File uploader
-    uploaded_file = st.file_uploader("Choose a video file", type=['mp4', 'avi', 'mov'])
-    
-    if uploaded_file is not None:
-        # Create a temporary file to store the uploaded video
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
-            tmp_file.write(uploaded_file.read())
-            video_path = tmp_file.name
-        
-        # Get video duration
-        duration = get_video_duration(video_path)
-        st.info(f"Video duration: {duration:.1f} seconds")
-        
-        # Initialize pose analyzer
-        analyzer = PoseAnalyzer()
-        
-        # Create progress bar
-        progress_bar = st.progress(0)
-        status_text = st.empty()
-        
-        # Process video
-        start_time = time.time()
-        results = analyzer.process_video(video_path)
-        end_time = time.time()
-        
-        # Clean up temporary file
-        os.unlink(video_path)
-        
-        # Show processing time
-        processing_time = end_time - start_time
-        st.success(f"Analysis completed in {processing_time:.1f} seconds")
-        
-        # Generate AI analysis comments
-        analysis_comments = generate_analysis_comments(results)
-        
-        # Display results
-        st.header("Analysis Results")
-        
-        # AI Analysis Section
-        st.subheader("🤖 AI Analysis")
-        
-        # Risk Assessment
-        st.markdown(f"### Risk Level: {analysis_comments['risk_assessment']}")
-        
-        # Key Findings
-        st.markdown("### Key Findings")
-        for finding in analysis_comments['key_findings']:
-            st.markdown(f"- {finding}")
-        
-        # Recommendations
-        st.markdown("### Recommendations")
-        for recommendation in analysis_comments['recommendations']:
-            st.markdown(f"- {recommendation}")
-        
-        # Body Part Analysis
-        st.subheader("Body Part Analysis")
-        
-        # Create tabs for different categories
-        tab1, tab2, tab3, tab4 = st.tabs(["Neck", "Trunk", "Arms", "Legs"])
-        
-        with tab1:
-            display_body_part_section('neck', results, st)
-            st.plotly_chart(create_count_chart(results, 'neck'), use_container_width=True)
-            st.plotly_chart(create_duration_chart(results, 'neck'), use_container_width=True)
-        
-        with tab2:
-            display_body_part_section('trunk', results, st)
-            st.plotly_chart(create_count_chart(results, 'trunk'), use_container_width=True)
-            st.plotly_chart(create_duration_chart(results, 'trunk'), use_container_width=True)
-        
-        with tab3:
-            display_body_part_section('arms', results, st)
-            st.plotly_chart(create_count_chart(results, 'arms'), use_container_width=True)
-            st.plotly_chart(create_duration_chart(results, 'arms'), use_container_width=True)
-        
-        with tab4:
-            display_body_part_section('legs', results, st)
-            st.plotly_chart(create_count_chart(results, 'legs'), use_container_width=True)
-            st.plotly_chart(create_duration_chart(results, 'legs'), use_container_width=True)
-        
-        # Raw data
-        st.subheader("Raw Data")
-        st.json(results)
-        
-        # Download button for results
-        st.download_button(
-            label="Download Analysis Results",
-            data=json.dumps({
-                "analysis_results": results,
-                "ai_analysis": analysis_comments
-            }, indent=2),
-            file_name="ergonomic_analysis.json",
-            mime="application/json"
+    try:
+        # Set page config
+        st.set_page_config(
+            page_title="Industrial Ergonomic Risk Detection",
+            page_icon="🏭",
+            layout="wide"
         )
+        
+        st.title("🏭 Industrial Ergonomic Risk Detection")
+        st.markdown("""
+        This application analyzes videos of industrial work to detect potentially risky postures.
+        Upload a video to get started with the analysis.
+        """)
+        
+        # File uploader
+        uploaded_file = st.file_uploader("Choose a video file", type=['mp4', 'avi', 'mov'])
+        
+        if uploaded_file is not None:
+            try:
+                # Create a temporary file to store the uploaded video
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
+                    tmp_file.write(uploaded_file.read())
+                    video_path = tmp_file.name
+                
+                # Get video duration
+                duration = get_video_duration(video_path)
+                st.info(f"Video duration: {duration:.1f} seconds")
+                
+                # Initialize pose analyzer
+                analyzer = PoseAnalyzer()
+                
+                # Create progress bar
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                # Process video
+                start_time = time.time()
+                results = analyzer.process_video(video_path)
+                end_time = time.time()
+                
+                # Clean up temporary file
+                os.unlink(video_path)
+                
+                # Show processing time
+                processing_time = end_time - start_time
+                st.success(f"Analysis completed in {processing_time:.1f} seconds")
+                
+                # Generate AI analysis comments
+                analysis_comments = generate_analysis_comments(results)
+                
+                # Display results
+                st.header("Analysis Results")
+                
+                # AI Analysis Section
+                st.subheader("🤖 AI Analysis")
+                
+                # Risk Assessment
+                st.markdown(f"### Risk Level: {analysis_comments['risk_assessment']}")
+                
+                # Key Findings
+                st.markdown("### Key Findings")
+                for finding in analysis_comments['key_findings']:
+                    st.markdown(f"- {finding}")
+                
+                # Recommendations
+                st.markdown("### Recommendations")
+                for recommendation in analysis_comments['recommendations']:
+                    st.markdown(f"- {recommendation}")
+                
+                # Body Part Analysis
+                st.subheader("Body Part Analysis")
+                
+                # Create tabs for different categories
+                tab1, tab2, tab3, tab4 = st.tabs(["Neck", "Trunk", "Arms", "Legs"])
+                
+                with tab1:
+                    display_body_part_section('neck', results, st)
+                    st.plotly_chart(create_count_chart(results, 'neck'), use_container_width=True)
+                    st.plotly_chart(create_duration_chart(results, 'neck'), use_container_width=True)
+                
+                with tab2:
+                    display_body_part_section('trunk', results, st)
+                    st.plotly_chart(create_count_chart(results, 'trunk'), use_container_width=True)
+                    st.plotly_chart(create_duration_chart(results, 'trunk'), use_container_width=True)
+                
+                with tab3:
+                    display_body_part_section('arms', results, st)
+                    st.plotly_chart(create_count_chart(results, 'arms'), use_container_width=True)
+                    st.plotly_chart(create_duration_chart(results, 'arms'), use_container_width=True)
+                
+                with tab4:
+                    display_body_part_section('legs', results, st)
+                    st.plotly_chart(create_count_chart(results, 'legs'), use_container_width=True)
+                    st.plotly_chart(create_duration_chart(results, 'legs'), use_container_width=True)
+                
+                # Raw data
+                st.subheader("Raw Data")
+                st.json(results)
+                
+                # Download button for results
+                st.download_button(
+                    label="Download Analysis Results",
+                    data=json.dumps({
+                        "analysis_results": results,
+                        "ai_analysis": analysis_comments
+                    }, indent=2),
+                    file_name="ergonomic_analysis.json",
+                    mime="application/json"
+                )
+                
+            except Exception as e:
+                logger.error(f"Error processing video: {str(e)}")
+                st.error(f"An error occurred while processing the video: {str(e)}")
+                if 'video_path' in locals():
+                    try:
+                        os.unlink(video_path)
+                    except:
+                        pass
+    
+    except Exception as e:
+        logger.error(f"Application error: {str(e)}")
+        st.error("An error occurred in the application. Please try again.")
 
 if __name__ == "__main__":
     main() 

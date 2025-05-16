@@ -3,11 +3,13 @@ services:
     name: ergonomic-risk-detection
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
     envVars:
       - key: PYTHON_VERSION
         value: 3.8.0
       - key: STREAMLIT_SERVER_PORT
         value: $PORT
       - key: STREAMLIT_SERVER_ADDRESS
-        value: 0.0.0.0 
+        value: 0.0.0.0
+      - key: STREAMLIT_SERVER_HEADLESS
+        value: true 
